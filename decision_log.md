@@ -75,6 +75,16 @@
 | **Evidence** | `len(train_df)` = 4729, `len(test_df)` = 2173. Last train date = 2017-12-29. First test date = 2018-01-02. Boundary confirmed clean, no overlap |
 | **What could invalidate this** | If date format is a string, boolean comparison will not work correctly, since `pd.Timestamp` comparisons require datetime dtype to validate properly. Also, a corrupted or missing date (NaT) will not crash the split, it will silently be excluded from both train and test, since `NaT < cutoff` and `NaT >= cutoff` both evaluate False. This isn't currently caught end-to-end, the NYSE calendar check runs independently on raw data and isn't reapplied after downstream transformations |
 
+## Phase 6 — Majority-Class Baseline
+
+| Field | Detail |
+|---|---|
+| **Decision** | Compute majority-class baseline from the existing `target` column, computed separately for train and test rather than pooled |
+| **Alternatives** | Considered recomputing `target` inside each subset — rejected. Considered a single pooled baseline across the full dataset — rejected |
+| **Why** | Recomputing `target` inside `train_df` via `.shift(-1)` corrupts the last row to a false 0 (NaN → int cast bug) even though real next-day data exists in `test_df`; using the existing full-dataset `target` avoids this. Separate baselines are needed because different market periods have different up/down base rates — a pooled number misrepresents both |
+| **Evidence** | Train: 2541/4729 = 53.73% majority (class 1). Test: 1219/2173 = 56.09% majority (class 1) |
+| **What could invalidate** | New data added to the dataset changes test composition and reopens this number. Changing the train/test cutoff date redraws the split and can shift both baselines |
+
 ## Phase 7 — Logistic Regression (Pipeline)
 
 | Field | Detail |
@@ -104,13 +114,3 @@
 | **Why** | StandardScaler was dropped from this pipeline (unlike Phase 7), since decision trees split on threshold values per feature independently and are not sensitive to feature scale, unlike gradient-based linear models. `max_depth` was swept rather than fixed at one value because an unconstrained tree was predicted (and later confirmed) to overfit, a fixed depth wouldn't reveal where the train/test accuracy gap actually starts, which is the diagnostic needed to separate "the tree overfit" from "the tree found no real signal" |
 | **Evidence** | Bug caught and fixed mid-sweep: initial loop mistakenly held `max_depth` fixed at 15 via `max(depths)` while varying `random_state`, producing misleadingly high, roughly flat train accuracy (~71%) across all "depths." After fixing (loop `depth` in `max_depth`, fixed `random_state=42`), true sweep showed: train accuracy climbs steadily from 54.47% (depth=1) to 71.41% (depth=15). Test accuracy peaks at depth=5 (55.78%), then declines steadily to 52.14% by depth=15, both below train accuracy and below the test baseline of 56.09% at every depth. Best test-depth result (55.78% at depth=5) does not beat baseline |
 | **What could invalidate this** | This tests one tree-based model (single decision tree) on the same four OHLCV-derived features already ruled out by Phase 7. It does not prove no non-linear signal exists in the underlying market relationship, only that these four specific features contain no non-linear separation exploitable by a single tree either. An ensemble method (random forest, gradient boosting) or a different/expanded feature set could still find something this setup did not |
-
-## Phase 6 — Majority-Class Baseline
-
-| Field | Detail |
-|---|---|
-| **Decision** | Compute majority-class baseline from the existing `target` column, computed separately for train and test rather than pooled |
-| **Alternatives** | Considered recomputing `target` inside each subset — rejected. Considered a single pooled baseline across the full dataset — rejected |
-| **Why** | Recomputing `target` inside `train_df` via `.shift(-1)` corrupts the last row to a false 0 (NaN → int cast bug) even though real next-day data exists in `test_df`; using the existing full-dataset `target` avoids this. Separate baselines are needed because different market periods have different up/down base rates — a pooled number misrepresents both |
-| **Evidence** | Train: 2541/4729 = 53.73% majority (class 1). Test: 1219/2173 = 56.09% majority (class 1) |
-| **What could invalidate** | New data added to the dataset changes test composition and reopens this number. Changing the train/test cutoff date redraws the split and can shift both baselines |
