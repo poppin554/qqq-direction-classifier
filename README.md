@@ -105,3 +105,12 @@ Python, pandas, numpy, scikit-learn, yfinance, pandas-market-calendars
 ## Project structure / decision log
 
 Every methodological choice in this project, including ones that were initially wrong and had to be corrected (e.g. a NaN-to-int casting bug, a train/test date-masking bug), is documented with alternatives considered, reasoning, evidence, and what would invalidate it, in `decision_log.md`.
+
+## How to run
+
+git clone <repo-url>
+cd qqq-direction-classifier
+python -m venv venv
+venv\Scripts\activate      # Windows
+pip install -r requirements.txt
+python run_pipeline.py
