@@ -1,5 +1,5 @@
 # QQQ Direction Classifier — Decision Log
-
+**Note:** AI assisted with structuring these decision logs. The technical decisions and conclusions reflect my own evaluation and verification.
 ## Phase 1 — Project Setup
 
 | # | Decision | Alternatives considered | Why chosen | Evidence | What could invalidate it |
