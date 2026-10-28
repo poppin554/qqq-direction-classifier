@@ -1,5 +1,5 @@
 # QQQ Next-Day Direction Classifier
-
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 A leakage-safe test of whether public technical indicators can predict next-day stock direction, and an honest accounting of what happens when they don't.
 
 ## Motivation
