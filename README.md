@@ -134,7 +134,7 @@ Every methodological choice, including ones that were initially wrong and correc
 ## How to run
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/poppin554/qqq-direction-classifier
 cd qqq-direction-classifier
 python -m venv venv
 venv\Scripts\activate      # Windows; use `source venv/bin/activate` on macOS/Linux
